@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HIGH LOW 9-ER</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://esm.sh/three@0.160.0?dev",
+          "three/": "https://esm.sh/three@0.160.0&dev/"
+        }
+      }
+    </script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: 'Arial', sans-serif;
+        background: #1a1a1a;
+      }
+      
+      #ui-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 100;
+      }
+      
+      .ui-element {
+        pointer-events: auto;
+        position: absolute;
+      }
+      
+      #deck-info {
+        top: 20px;
+        left: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 15px;
+        font-size: 16px;
+        border: 2px solid #d4af37;
+      }
+      #leaderboard-btn {
+        top: 90px;
+        left: 20px;
+        background: #d4af37;
+        color: #000;
+        padding: 8px 15px;
+        border-radius: 10px;
+        font-size: 14px;
+        cursor: pointer;
+        border: 1px solid #000;
+      }
+      #pause-btn {
+        top: 20px;
+        right: 170px; /* Position next to used cards info */
+        background: rgba(0, 0, 0, 0.8);
+        color: #d4af37;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        font-size: 20px;
+        cursor: pointer;
+        border: 2px solid #d4af37;
+        text-align: center;
+        line-height: 40px;
+        transition: all 0.2s;
+        z-index: 101;
+      }
+      #pause-btn:hover {
+        background: rgba(20, 20, 20, 0.9);
+        color: #fff;
+      }
+      #main-menu {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 300;
+        text-align: center;
+        color: white;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 40px 60px;
+        border-radius: 20px;
+        border: 2px solid #d4af37;
+      }
+      #main-menu h1 {
+        font-size: 48px;
+        color: #d4af37;
+        margin: 0;
+      }
+      #main-menu p {
+        font-size: 20px;
+        margin-bottom: 30px;
+      }
+      .menu-btn {
+        background: linear-gradient(135deg, #d4af37, #f4d03f);
+        color: #2c3e50;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        display: block;
+        width: 100%;
+        margin: 15px 0;
+      }
+      .menu-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+      }
+      .modal {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        border: 2px solid #d4af37;
+        border-radius: 20px;
+        padding: 20px;
+        z-index: 200;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+      }
+      .modal.visible {
+        display: block;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      .modal h2 {
+        text-align: center;
+        margin-top: 0;
+        color: #d4af37;
+      }
+      #pause-menu {
+        width: 350px;
+        z-index: 250;
+      }
+      #leaderboard {
+        width: 400px;
+      }
+      #how-to-play-modal {
+        width: 90%;
+        max-width: 600px;
+        padding: 20px 30px;
+        z-index: 400;
+      }
+      #how-to-play-modal .instructions {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding-right: 15px;
+      }
+      #how-to-play-modal .instructions h3 {
+        color: #f4d03f;
+        border-bottom: 1px solid #d4af37;
+        padding-bottom: 5px;
+      }
+      #how-to-play-modal .instructions p, #how-to-play-modal .instructions li {
+        line-height: 1.6;
+      }
+      #leaderboard-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      #leaderboard-list li {
+        display: grid;
+        grid-template-columns: 30px 1fr 1fr 1fr 30px;
+        align-items: center;
+        padding: 8px 5px;
+        border-bottom: 1px solid #444;
+      }
+      #leaderboard-list li:last-child {
+        border-bottom: none;
+      }
+      .remove-score-btn {
+        background: #c0392b;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 24px;
+        text-align: center;
+      }
+      .close-modal-btn {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+      }
+      
+      #used-cards-info {
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 15px;
+        font-size: 14px;
+        border: 2px solid #d4af37;
+        width: 120px;
+        text-align: center;
+      }
+      
+      #probability-info {
+        margin-top: 15px;
+      }
+      #probability-info h4 {
+        margin: 0 0 10px 0;
+        font-size: 16px;
+        border-bottom: 1px solid #d4af37;
+        padding-bottom: 5px;
+      }
+      #probability-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-family: monospace;
+      }
+      #probability-list li {
+        display: flex;
+        justify-content: space-between;
+        padding: 2px 0;
+        font-size: 13px;
+      }
+      
+      #used-cards-info h4 {
+        margin: 0 0 10px 0;
+        font-size: 16px;
+        border-bottom: 1px solid #d4af37;
+        padding-bottom: 5px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      #used-cards-info h4 .toggle-icon {
+        font-size: 12px;
+        transition: transform 0.3s;
+      }
+      
+      #used-cards-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: block;
+        font-family: monospace;
+        transition: max-height 0.4s ease-out, opacity 0.4s ease-out;
+        max-height: 500px; /* Adjust as needed */
+        overflow: hidden;
+        opacity: 1;
+      }
+      
+      #used-cards-list.collapsed {
+        max-height: 0;
+        opacity: 0;
+        margin-top: 0;
+      }
+      
+      #used-cards-list .card-group-header {
+        font-size: 12px;
+        font-weight: bold;
+        color: #d4af37;
+        margin-top: 8px;
+        margin-bottom: 4px;
+        text-align: left;
+      }
+      #used-cards-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2px 0;
+        font-size: 13px;
+      }
+      .progress-bar-container {
+        width: 60%;
+        height: 8px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.3);
+      }
+      .progress-bar-fill {
+        width: 0%;
+        height: 100%;
+        background-color: #3498db;
+        transition: width 0.5s ease-in-out;
+        border-radius: 4px;
+      }
+      
+      #prediction-ui {
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 20px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      
+      #prediction-ui.active {
+        opacity: 1;
+      }
+      
+      .prediction-btn {
+        background: linear-gradient(135deg, #d4af37, #f4d03f);
+        color: #2c3e50;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+      }
+      
+      .prediction-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+      }
+      
+      #result-info {
+        bottom: 110px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.75);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 16px;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 0.4s, bottom 0.4s;
+        border: 2px solid transparent;
+      }
+      
+      #game-status {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 30px;
+        border-radius: 20px;
+        font-size: 24px;
+        text-align: center;
+        border: 3px solid #d4af37;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="main-menu">
+      <h1>HIGH LOW 9-ER</h1>
+      <p>Elimination card game</p>
+      <button id="start-game-btn" class="menu-btn">Start Game</button>
+      <button id="how-to-play-btn" class="menu-btn">How to Play</button>
+    </div>
+    <div id="how-to-play-modal" class="modal">
+      <button id="close-how-to-play-btn" class="close-modal-btn">&times;</button>
+      <h2>How to Play</h2>
+      <div class="instructions">
+        <h3>Objective</h3>
+        <p>The goal is to clear the 3x3 grid of cards by correctly guessing if the next card from the deck is higher or lower than your selected card. Aces are high.</p>
+        
+        <h3>Gameplay</h3>
+        <ol>
+          <li><strong>Select a card:</strong> Click on any active card in the 3x3 grid.</li>
+          <li><strong>Make a prediction:</strong> Guess if the next card from the deck will be HIGHER or LOWER in value. Aces are high, with '2' being the lowest.</li>
+          <li><strong>Correct Guess:</strong> If you're correct, the selected card is replaced by the new card from the deck and remains active.</li>
+          <li><strong>Incorrect Guess:</strong> If you're wrong, the selected card becomes inactive and turns grey. You cannot select it again.</li>
+        </ol>
+        
+        <h3>Controls</h3>
+        <ul>
+          <li><strong>Mouse Click:</strong> Select/Deselect a card.</li>
+          <li><strong>'W' or HIGHER button:</strong> Predict the next card is higher.</li>
+          <li><strong>'S' or LOWER button:</strong> Predict the next card is lower.</li>
+        </ul>
+        <h3>Game End</h3>
+        <p>The game ends when either the deck runs out (Victory!) or there are no more active cards on the grid (Game Over). Your score is the number of cards left in the deck. A lower score is better!</p>
+      </div>
+    </div>
+    <div id="ui-container" style="display: none;">
+      <button id="pause-btn" class="ui-element">&#9776;</button>
+      <div id="deck-info" class="ui-element">
+        <div>Remaining Deck: <span id="deck-count">43</span></div>
+        <div>Active Cards: <span id="active-count">9</span>/9</div>
+      </div>
+      <button id="leaderboard-btn" class="ui-element">Leaderboard</button>
+      <div id="used-cards-info" class="ui-element">
+        <h4>Used Cards <span class="toggle-icon">▼</span></h4>
+        <ul id="used-cards-list">
+          <!-- Ranks will be populated by JS -->
+        </ul>
+        <div id="probability-info">
+          <h4>Next Card Odds</h4>
+          <ul id="probability-list">
+            <!-- Populated by JS -->
+          </ul>
+        </div>
+      </div>
+      
+      <div id="prediction-ui" class="ui-element">
+        <button class="prediction-btn" id="lower-btn">LOWER</button>
+        <button class="prediction-btn" id="higher-btn">HIGHER</button>
+      </div>
+      <div id="result-info" class="ui-element"></div>
+      
+      <div id="game-status" class="ui-element">
+        <div id="status-text">Game Complete!</div>
+        <div id="highscore-entry" style="margin-top: 15px; font-size: 16px; display: none;">
+          <p style="margin: 5px 0 10px;">New high score! Enter your name:</p>
+          <input type="text" id="player-name-input" placeholder="AAA" maxlength="10" style="padding: 8px; border-radius: 5px; border: 1px solid #d4af37; background: #333; color: white; text-align: center; width: 100px; margin-bottom: 10px;">
+          <button id="save-score-btn" class="prediction-btn" style="padding: 10px 20px; font-size: 16px;">Save</button>
+        </div>
+        <div id="play-again-container" style="margin-top: 15px; font-size: 16px;">
+          <button class="prediction-btn" onclick="location.reload()">Play Again</button>
+        </div>
+      </div>
+      <div id="leaderboard" class="ui-element modal">
+        <button id="close-leaderboard-btn" class="close-modal-btn">&times;</button>
+        <h2>Top Scores</h2>
+        <ul id="leaderboard-list">
+          <!-- Scores will be populated by JS -->
+        </ul>
+      </div>
+      <div id="pause-menu" class="modal ui-element">
+        <h2>Game Paused</h2>
+        <button id="resume-game-btn" class="menu-btn" style="margin-bottom: 15px;">Resume Game</button>
+        <button id="restart-game-btn" class="menu-btn" style="margin-bottom: 15px;">Restart Game</button>
+        <button id="back-to-menu-btn" class="menu-btn">Back to Menu</button>
+      </div>
+    </div>
+    
+    <script type="module" src="main.js"></script>
+ 
+  </body>
+</html>
