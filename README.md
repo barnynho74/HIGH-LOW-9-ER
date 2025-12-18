@@ -1,4 +1,12 @@
 # HIGH-LOW-9-ER
+## ▶ One-click run (Windows)
+
+1. Make sure Python is installed (https://www.python.org)
+2. Double-click `runME.bat`
+3. The game will open automatically in your browser
+
+No code editor is required.
+---------------------------------------------
 ## ▶ Run Locally
 
 Because this project uses modern JavaScript ES modules, it must be run through a local web server.
@@ -15,8 +23,6 @@ Because this project uses modern JavaScript ES modules, it must be run through a
 
    http://localhost:8000
 
-
-   
 ### Option B: VS Code Live Server
 
 1. Open the project in Visual Studio Code
