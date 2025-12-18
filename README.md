@@ -14,3 +14,11 @@ Because this project uses modern JavaScript ES modules, it must be run through a
 4. Open your browser and go to:
 
    http://localhost:8000
+
+
+   
+### Option B: VS Code Live Server
+
+1. Open the project in Visual Studio Code
+2. Install the "Live Server" extension
+3. Right-click `index.html` → "Open with Live Server"
